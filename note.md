@@ -9,3 +9,10 @@ CRUD => CREATE READ UPDATE DELETE
 
 /:uniqueId => delete (delete) =>  delete the note related to this uniqueId
 
+react 
+
+axios.post()
+fetch.post()
+
+<form onSubmit={submitForm}></form>
+<form action="index.js"></form>
