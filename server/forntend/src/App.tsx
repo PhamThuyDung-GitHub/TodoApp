@@ -7,6 +7,13 @@ const App = () => {
   // const [title, setTitle] = useState("");
   // const [description, setDescription] = useState("");
 
+  const [notes, setNotes] = useState<
+    {
+      id: string;
+      title: string;
+      description?: string;
+    }[]
+  >([]);
   const [values, setValues] = useState({
     title: "",
     description: "",
@@ -31,7 +38,8 @@ const App = () => {
               description: values.description,
             }
           );
-          console.log(data);
+          setNotes([data.note, ...notes]);
+          setValues({ title: "", description: "" });
         }}
         className="space-y-6 bg-white shadow-md rounded p-5"
       >
@@ -63,10 +71,9 @@ const App = () => {
       </form>
 
       {/* Note Items */}
-      <NoteItem title="My first re-usable component" />
-      <NoteItem title="Lorem ipsum dolor sit amet consectetur" />
-      <NoteItem title="Hic perferendis at repellendus fuga" />
-      <NoteItem title="In molestiae optio aspernatur repudiandae" />
+      {notes.map((note) => {
+        return <NoteItem key={note.title} title={note.title} />;
+      })}
     </div>
   );
 };
