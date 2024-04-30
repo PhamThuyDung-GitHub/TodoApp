@@ -1,4 +1,4 @@
-import React, { useState, ChangeEventHandler } from "react";
+import React, { useState, ChangeEventHandler, useEffect } from "react";
 import NoteItem from "./components/NoteItem";
 import axios from "axios";
 
@@ -7,6 +7,7 @@ const App = () => {
   // const [title, setTitle] = useState("");
   // const [description, setDescription] = useState("");
 
+  const [count, setCount] = useState(0);
   const [notes, setNotes] = useState<
     {
       id: string;
@@ -18,6 +19,7 @@ const App = () => {
     title: "",
     description: "",
   });
+  const [selectedNoteId, setSelectedNoteId] = useState("");
 
   const handleChange: ChangeEventHandler<
     HTMLInputElement | HTMLTextAreaElement
@@ -26,11 +28,44 @@ const App = () => {
     setValues({ ...values, [name]: value });
   };
 
+  useEffect(() => {
+    const fetchNotes = async () => {
+      // call the api and fetch notes
+      const { data } = await axios("http://localhost:8000/note");
+      setNotes(data.notes);
+    };
+
+    fetchNotes();
+  }, []);
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <form
         onSubmit={async (evt) => {
           evt.preventDefault();
+          if (selectedNoteId) {
+            // then we want to update
+            const { data } = await axios.patch(
+              "http://localhost:8000/note/" + selectedNoteId,
+              {
+                title: values.title,
+                description: values.description,
+              }
+            );
+
+            const updatedNotes = notes.map((note) => {
+              if (note.id === selectedNoteId) {
+                note.title = data.note.title;
+                note.description = data.note.description;
+              }
+              return note;
+            });
+
+            setNotes([...updatedNotes]);
+            setValues({ title: "", description: "" });
+            return;
+          }
+
           const { data } = await axios.post(
             "http://localhost:8000/note/create",
             {
@@ -43,6 +78,12 @@ const App = () => {
         }}
         className="space-y-6 bg-white shadow-md rounded p-5"
       >
+        <div>
+          <span>{count} </span>
+          <button type="button" onClick={() => setCount(count + 1)}>
+            Click Me
+          </button>
+        </div>
         <h1 className="font-semibold text-2xl text-center">Note Application</h1>
         <div>
           <input
@@ -72,7 +113,19 @@ const App = () => {
 
       {/* Note Items */}
       {notes.map((note) => {
-        return <NoteItem key={note.title} title={note.title} />;
+        return (
+          <NoteItem
+            onEditClick={() => {
+              setSelectedNoteId(note.id);
+              setValues({
+                title: note.title,
+                description: note.description || "",
+              });
+            }}
+            key={note.id}
+            title={note.title}
+          />
+        );
       })}
     </div>
   );

@@ -46,7 +46,7 @@ export const removeSingleNote: RequestHandler = async (req, res) => {
       return res.status(404).json({ error: "Could not find note to remove!" });
     }
 
-    res.json({ message: "Note removed successfully." });
+    res.json({ note: {id: removedNote._id, title: removedNote.title, description: removedNote.description}});
   } catch (error) {
     res.status(500).json({ error: 'Failed to remove note', details: error });
   }
@@ -55,7 +55,14 @@ export const removeSingleNote: RequestHandler = async (req, res) => {
 export const getAllNotes: RequestHandler = async (req, res) => {
   try {
     const notes = await Note.find();
-    res.json({ notes });
+    res.json({ notes: notes.map((note) => {
+      return {
+        id: note._id,
+        title: note.title,
+        description: note.description
+
+      }
+    }) });
   } catch (error) {
     res.status(500).json({ error: 'Failed to retrieve notes', details: error });
   }
