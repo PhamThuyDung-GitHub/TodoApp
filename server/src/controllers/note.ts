@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import Note, { NoteDocument } from "../models/node";
+import Note, { NoteDocument } from "../models/node"; // Ensure the correct import path and model name
 
 export interface IncomingBody {
   title: string;
@@ -7,59 +7,69 @@ export interface IncomingBody {
 }
 
 export const create: RequestHandler = async (req, res) => {
-  // const newNote = new Note<NoteDocument>({
-  //   title: (req.body as IncomingBody).title,
-  //   description: (req.body as IncomingBody).description,
-  // });
+  try {
+    const newNote = await Note.create<NoteDocument>({
+      title: (req.body as IncomingBody).title,
+      description: (req.body as IncomingBody).description,
+    });
 
-  // await newNote.save();
-
-  await Note.create<NoteDocument>({
-    title: (req.body as IncomingBody).title,
-    description: (req.body as IncomingBody).description,
-  });
-
-  res.json({ message: "I am listening to create!" });
+    res.json({ note: {id: newNote._id, title: newNote.title, description: newNote.description} });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create note', details: error });
+  }
 };
 
 export const updateSingleNote: RequestHandler = async (req, res) => {
   const { noteId } = req.params;
-  // const note = await Note.findById(noteId);
-  // if (!note) return res.json({ error: "Note not found!" });
+  try {
+    const updatedNote = await Note.findByIdAndUpdate(
+      noteId,
+      { title: req.body.title, description: req.body.description },
+      { new: true, runValidators: true }
+    );
 
-  const { title, description } = req.body as IncomingBody;
-  // if (title) note.title = title;
-  // if (description) note.description = description;
+    if (!updatedNote) {
+      return res.status(404).json({ error: "Note not found!" });
+    }
 
-  const note = await Note.findByIdAndUpdate(
-    noteId,
-    { title, description },
-    { new: true }
-  );
-  if (!note) return res.json({ error: "Note not found!" });
-
-  await note.save();
-
-  res.json({ note });
+    res.json({ note: updatedNote });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update note', details: error });
+  }
 };
 
 export const removeSingleNote: RequestHandler = async (req, res) => {
   const { noteId } = req.params;
+  try {
+    const removedNote = await Note.findByIdAndDelete(noteId);
+    if (!removedNote) {
+      return res.status(404).json({ error: "Could not find note to remove!" });
+    }
 
-  const removedNote = await Note.findByIdAndDelete(noteId);
-  if (!removedNote) return res.json({ error: "Could not remove note!" });
-
-  res.json({ message: "Note removed successfully." });
+    res.json({ message: "Note removed successfully." });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove note', details: error });
+  }
 };
 
 export const getAllNotes: RequestHandler = async (req, res) => {
-  const notes = await Note.find();
-  res.json({ notes });
+  try {
+    const notes = await Note.find();
+    res.json({ notes });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve notes', details: error });
+  }
 };
 
 export const getSingleNote: RequestHandler = async (req, res) => {
   const { id } = req.params;
-  const note = await Note.findById(id);
-  if (!note) return res.json({ error: "Note not found!" });
-  res.json({ note });
+  try {
+    const note = await Note.findById(id);
+    if (!note) {
+      return res.status(404).json({ error: "Note not found!" });
+    }
+    res.json({ note });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to find note', details: error });
+  }
 };
