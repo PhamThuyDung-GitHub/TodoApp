@@ -2,19 +2,20 @@ import React, { useState, ChangeEventHandler, useEffect } from "react";
 import NoteItem from "./components/NoteItem";
 import axios from "axios";
 
+type noteType = {
+  id: string;
+  title: string;
+  description?: string;
+};
+
 // let title = "";
 const App = () => {
   // const [title, setTitle] = useState("");
   // const [description, setDescription] = useState("");
 
   const [count, setCount] = useState(0);
-  const [notes, setNotes] = useState<
-    {
-      id: string;
-      title: string;
-      description?: string;
-    }[]
-  >([]);
+  const [noteToView, setNoteToView] = useState<noteType>();
+  const [notes, setNotes] = useState<noteType[]>([]);
   const [values, setValues] = useState({
     title: "",
     description: "",
@@ -112,15 +113,40 @@ const App = () => {
       </form>
 
       {/* Note Items */}
+
       {notes.map((note) => {
         return (
           <NoteItem
+            onViewClick={() => {
+              if (noteToView) {
+                setNoteToView(undefined);
+              } else {
+                setNoteToView(note);
+              }
+            }}
+            description={
+              noteToView?.id === note.id ? noteToView?.description : ""
+            }
             onEditClick={() => {
               setSelectedNoteId(note.id);
               setValues({
                 title: note.title,
                 description: note.description || "",
               });
+            }}
+            onDeleteClick={async () => {
+              const result = confirm("Are you sure?");
+              if (result) {
+                // delete
+                await axios.delete("http://localhost:8000/note/" + note.id);
+
+                // const updatedNotes = notes.filter(({ id }) => {
+                //   if (id !== note.id) return note;
+                // });
+                const updatedNotes = notes.filter(({ id }) => id !== note.id);
+
+                setNotes([...updatedNotes]);
+              }
             }}
             key={note.id}
             title={note.title}
